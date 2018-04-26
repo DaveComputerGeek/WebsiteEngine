@@ -3,6 +3,7 @@
 namespace DaveComputerGeek;
 
 require_once 'Config.php';
+require_once 'Template.php';
 
 class WebsiteEngine {
     

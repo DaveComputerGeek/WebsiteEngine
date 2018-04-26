@@ -1,2 +1,7 @@
-test: This is a test!
-random: So very random!
+routes:
+  home:
+    uri: /
+    template: default:home
+  contact:
+    uri: /contact
+    template: default:contact
