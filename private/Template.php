@@ -5,6 +5,8 @@ namespace DaveComputerGeek;
 class Template {
     
     private $dirname;
+    private $config;
+    private $tags = [], $ftags = [];
     
     private static $TEMPLATES = [];
     private static $REQUIRED_FILES = ["index.tpl"];
@@ -12,6 +14,18 @@ class Template {
     
     public function __construct(String $dirname) {
         $this->dirname = $dirname;
+        
+        // Does the template have a configuration file? Parse the YAML into an array.
+        if(file_exists($this->getDirPath() . "/config.yml")) { $this->config = yaml_parse_file($this->getDirPath() . "/config.yml"); }
+        // Does our configuration have any tags defined? Loop through and register them.
+        if(is_array($this->config) && array_key_exists("tags", $this->config)) {
+            foreach ($this->config['tags'] as $tag => $value) {
+                $this->registerTag($tag, $value);
+            }
+        }
+        
+        // Define function tags.
+        $this->ftags['year'] = date("Y");
     }
     
     /**
@@ -62,13 +76,53 @@ class Template {
         if(substr($filename, -4) == ".tpl")
             $filename = substr($filename, 0, -4);
         
-        // Check if template file exists and return its contents.
+        $contents = "";
+        
+        // Check if template file exists and fetch its contents.
         if(file_exists($this->getDirPath() . "/" . $filename . ".tpl")) {
-            return file_get_contents($this->getDirPath() . "/" . $filename . ".tpl");
+            $contents = file_get_contents($this->getDirPath() . "/" . $filename . ".tpl");
+        }
+        
+        // Process all template tags {{ template_tag }}
+        foreach ($this->tags as $id => $content) {
+            if(is_string($content)) {
+                $contents = str_replace("{{ " . $id . " }}", $content, $contents);
+            } else if(is_array($content)) {
+                $list = "<ul>";
+                foreach ($content as $item) {
+                    $list .= "<li>" . $item . "</li>";
+                }
+                $list .= "</ul>";
+                $contents = str_replace("{{ " . $id . " }}", $list, $contents);
+            }
+        }
+        
+        // Process all function tags {% function_tag %}
+        foreach ($this->ftags as $id => $content) {
+            $contents = str_replace("{% " . $id . " %}", $content, $contents);
+        }
+        
+        // Process include function tags (filename is relative to template's directory and is without extension) {% include="filename" %}
+        if(preg_match_all("/{% include=\"(.*)\" %}/", $contents, $matches, PREG_PATTERN_ORDER)) {
+            for ($m = 0; $m < count($matches[0]); $m++) {
+                if(file_exists($this->getDirPath() . "/" . $matches[1][$m] . ".tpl")) {
+                    $contents = str_replace($matches[0][$m], file_get_contents($this->getDirPath() . "/" . $matches[1][$m] . ".tpl"), $contents);
+                }
+            }
         }
         
         // Template file does not exist, return empty string.
-        return "";
+        return $contents;
+    }
+    
+    /**
+     * Register a template tag for use within the template files.
+     * @param String $id
+     * @param String|array $content
+     */
+    public function registerTag(String $id, $content) {
+        if(is_string($content) || is_array($content))
+            $this->tags[$id] = $content;
     }
     
     /**
