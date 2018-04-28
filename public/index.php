@@ -22,7 +22,7 @@ if(is_array($routes)) {
                     $template_name = $template_variable[0];
                     $template_file = $template_variable[1];
                     
-                    $template = Template::register($template_name);
+                    $template = Template::register($template_name, $route_info);
                     if($template instanceof Template)
                         echo $template->getFile($template_file);
                     else

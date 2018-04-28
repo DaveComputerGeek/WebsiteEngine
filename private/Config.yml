@@ -2,6 +2,8 @@ routes:
   home:
     uri: /
     template: default:home
+    title: Home Page
   contact:
     uri: /contact
     template: default:contact
+    title: Get in Touch

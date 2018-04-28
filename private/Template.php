@@ -5,6 +5,7 @@ namespace DaveComputerGeek;
 class Template {
     
     private $dirname;
+    private $route_info;
     private $config;
     private $tags = [], $ftags = [];
     
@@ -12,8 +13,9 @@ class Template {
     private static $REQUIRED_FILES = ["index.tpl"];
     private static $TEMPLATES_DIR_PATH = "../private/templates";
     
-    public function __construct(String $dirname) {
+    public function __construct(String $dirname, array $route_info) {
         $this->dirname = $dirname;
+        $this->route_info = $route_info;
         
         // Does the template have a configuration file? Parse the YAML into an array.
         if(file_exists($this->getDirPath() . "/config.yml")) { $this->config = yaml_parse_file($this->getDirPath() . "/config.yml"); }
@@ -33,7 +35,7 @@ class Template {
      * @param String $dirname
      * @return Template|boolean
      */
-    public static function register(String $dirname) {
+    public static function register(String $dirname, array $route_info) {
         // Ensure all required files exist.
         /*foreach (Template::$REQUIRED_FILES as $required_file) {
             // Stop here if a required file does not exist.
@@ -45,7 +47,7 @@ class Template {
         if(!is_dir("../private/templates/" . $dirname)) return;
         
         // Register the template.
-        Template::$TEMPLATES[$dirname] = new Template($dirname);
+        Template::$TEMPLATES[$dirname] = new Template($dirname, $route_info);
         
         // Return the registered instance of Template.
         return Template::$TEMPLATES[$dirname];
@@ -110,6 +112,10 @@ class Template {
                 }
             }
         }
+        
+        // Process title function tags {% title %}
+        $title = array_key_exists("title", $this->route_info) ? $this->route_info['title'] : "Untitled Page";
+        $contents = str_replace("{% title %}", $title, $contents);
         
         // Template file does not exist, return empty string.
         return $contents;
