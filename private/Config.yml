@@ -1,3 +1,9 @@
+database:
+  host: 'hostname'
+  user: 'username'
+  pass: 'password'
+  name: 'db_name'
+
 routes:
   home:
     uri: /
